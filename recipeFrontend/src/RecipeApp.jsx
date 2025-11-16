@@ -54,26 +54,26 @@ export default function RecipeApp() {
         Generate Recipes
       </button>
 
-      {loading && <p>⏳ Generating recipes...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {loading && <p style={styles.centerText}>⏳ Generating recipes...</p>}
+      {error && <p style={{ ...styles.centerText, color: "red" }}>{error}</p>}
 
       <div style={styles.list}>
         {recipes.map((r, i) => (
           <div style={styles.card} key={i}>
-            <h2>{r.title}</h2>
-            <p><strong>Servings:</strong> {r.servings}</p>
-            <p><strong>Time:</strong> {r.time_minutes} mins</p>
-            <p><strong>Difficulty:</strong> {r.difficulty}</p>
+            <h2 style={styles.cardTitle}>{r.title}</h2>
+            <p style={styles.centerText}><strong>Servings:</strong> {r.servings}</p>
+            <p style={styles.centerText}><strong>Time:</strong> {r.time_minutes} mins</p>
+            <p style={styles.centerText}><strong>Difficulty:</strong> {r.difficulty}</p>
 
-            <h3>Ingredients</h3>
-            <ul>
+            <h3 style={styles.centerText}>Ingredients</h3>
+            <ul style={styles.centerList}>
               {r.ingredients.map((ing, idx) => (
                 <li key={idx}>{ing.qty} {ing.name}</li>
               ))}
             </ul>
 
-            <h3>Steps</h3>
-            <ol>
+            <h3 style={styles.centerText}>Steps</h3>
+            <ol style={styles.centerList}>
               {r.steps.map((step, idx) => (
                 <li key={idx}>{step}</li>
               ))}
@@ -90,10 +90,11 @@ const styles = {
     maxWidth: 800,
     margin: "0 auto",
     padding: 20,
-    fontFamily: "Arial"
+    fontFamily: "Arial, sans-serif",
   },
   title: {
-    textAlign: "center"
+    textAlign: "center",
+    marginBottom: 20,
   },
   input: {
     width: "100%",
@@ -101,28 +102,45 @@ const styles = {
     fontSize: 16,
     borderRadius: 8,
     border: "2px solid #ccc",
-    marginBottom: 10
+    marginBottom: 10,
+    textAlign: "center",
   },
   button: {
     width: "100%",
     padding: 12,
     fontSize: 16,
     borderRadius: 8,
-    background: "black",
+    background: "#222",
     color: "white",
     border: "none",
-    cursor: "pointer"
+    cursor: "pointer",
+    marginBottom: 20,
   },
   list: {
-    marginTop: 20
+    marginTop: 20,
   },
   card: {
-    background: "black",
+    background: "linear-gradient(135deg, #1a1a1a, #333)",
     color: "white",
-    borderRadius: 10,
-    padding: 20,
-    marginBottom: 20,
-    border: "1px solid #ddd",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.05)"
-  }
+    borderRadius: 12,
+    padding: 25,
+    marginBottom: 25,
+    border: "1px solid #444",
+    boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+    textAlign: "center",
+  },
+  cardTitle: {
+    marginTop: 0,
+    marginBottom: 15,
+  },
+  centerText: {
+    textAlign: "center",
+    margin: "5px 0",
+  },
+  centerList: {
+    textAlign: "center",
+    listStylePosition: "inside",
+    paddingLeft: 0,
+    marginBottom: 15,
+  },
 };

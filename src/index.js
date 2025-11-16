@@ -8,7 +8,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // --- 🔥 Handle CORS preflight (OPTIONS) BEFORE ANYTHING ELSE ---
+    // Handle CORS preflight (OPTIONS)
     if (request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
@@ -16,12 +16,12 @@ export default {
       });
     }
 
-    // --- Only allow POST /recipes ---
+    // Only allow POST /recipes
     if (request.method !== "POST" || url.pathname !== "/recipes") {
       return new Response("Use POST /recipes", { status: 405, headers: corsHeaders });
     }
 
-    // --- Parse JSON ---
+    // Parse JSON 
     let raw = await request.text();
     console.log("RAW BODY:", JSON.stringify(raw));
 
@@ -37,7 +37,7 @@ export default {
         }
       );
     }
-
+	// check for food field
     const food = data.food;
     if (!food) {
       return new Response(
@@ -49,7 +49,7 @@ export default {
       );
     }
 
-    // --- AI prompt ---
+    // AI prompt 
     const prompt = `
       You are a recipe generator AI. For the food "${food}", return ONLY JSON.
       {
@@ -71,14 +71,14 @@ export default {
       Return 3–5 options. No text outside JSON.
     `;
 
-    const aiResponse = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+    const aiResponse = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", { // if you want to use another model, change this line
       prompt,
       max_tokens: 1200,
     });
 
     const text = aiResponse.response;
 
-    // --- Parse AI JSON output ---
+    // AI JSON output 
     let parsed;
     try {
       parsed = JSON.parse(text);
