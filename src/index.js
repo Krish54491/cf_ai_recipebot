@@ -1,93 +1,94 @@
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
 export default {
   async fetch(request, env) {
-    if (request.method !== "POST") {
-      return new Response("Use POST /recipes", { status: 405 });
-    }
-
     const url = new URL(request.url);
-    if (url.pathname !== "/recipes") {
-      return new Response("Not found", { status: 404 });
-    }
 
-    const { food } = await request.json();
-
-    if (!food) {
-      return new Response(JSON.stringify({ error: "Missing food" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" }
+    // --- 🔥 Handle CORS preflight (OPTIONS) BEFORE ANYTHING ELSE ---
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders
       });
     }
 
-    // Prompt for Workers AI (Llama 3.3)
-    const prompt = `
-You are a recipe generator AI. For the food "${food}", return ONLY valid JSON:
-
-{
-  "query": "${food}",
-  "recipes": [
-    {
-      "id": "string",
-      "title": "string",
-      "servings": 4,
-      "time_minutes": 45,
-      "difficulty": "easy",
-      "ingredients": [
-        { "name": "string", "qty": "string", "normalized": "string" }
-      ],
-      "steps": ["string"]
+    // --- Only allow POST /recipes ---
+    if (request.method !== "POST" || url.pathname !== "/recipes") {
+      return new Response("Use POST /recipes", { status: 405, headers: corsHeaders });
     }
-  ]
-}
 
-Return 3-5 recipe options and NO extra text.
-`;
+    // --- Parse JSON ---
+    let raw = await request.text();
+    console.log("RAW BODY:", JSON.stringify(raw));
 
-    // Call Cloudflare Workers AI
-    const aiResponse = await env.AI.run(
-      "@cf/meta/llama-3.3-70b-instruct",
+    let data;
+    try {
+      data = raw ? JSON.parse(raw) : {};
+    } catch (err) {
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON", raw, message: err.message }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders }
+        }
+      );
+    }
+
+    const food = data.food;
+    if (!food) {
+      return new Response(
+        JSON.stringify({ error: "Missing 'food' field", received: data }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders }
+        }
+      );
+    }
+
+    // --- AI prompt ---
+    const prompt = `
+      You are a recipe generator AI. For the food "${food}", return ONLY JSON.
       {
-        prompt,
-        max_tokens: 1200,
+        "query": "${food}",
+        "recipes": [
+          {
+            "id": "string",
+            "title": "string",
+            "servings": 4,
+            "time_minutes": 45,
+            "difficulty": "easy",
+            "ingredients": [
+              { "name": "string", "qty": "string", "normalized": "string" }
+            ],
+            "steps": ["string"]
+          }
+        ]
       }
-    );
+      Return 3–5 options. No text outside JSON.
+    `;
 
-    // Extract response text
+    const aiResponse = await env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+      prompt,
+      max_tokens: 1200,
+    });
+
     const text = aiResponse.response;
 
-    // Try parse JSON
+    // --- Parse AI JSON output ---
     let parsed;
     try {
       parsed = JSON.parse(text);
-    } catch (err) {
-      // Try to extract JSON with regex fallback
+    } catch {
       const match = text.match(/\{[\s\S]*\}/);
-      if (!match) {
-        return new Response(JSON.stringify({ error: "Invalid AI JSON", raw: text }), {
-          status: 500,
-          headers: { "Content-Type": "application/json" }
-        });
-      }
-      try {
-        parsed = JSON.parse(match[0]);
-      } catch (e) {
-        return new Response(JSON.stringify({ error: "Still invalid JSON", raw: text }), {
-          status: 500,
-          headers: { "Content-Type": "application/json" }
-        });
-      }
+      parsed = match ? JSON.parse(match[0]) : { error: "AI invalid JSON", raw: text };
     }
 
     return new Response(JSON.stringify(parsed), {
-      headers: { "Content-Type": "application/json" }
+      headers: { "Content-Type": "application/json", ...corsHeaders }
     });
   }
 };
