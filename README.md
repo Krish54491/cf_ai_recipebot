@@ -10,7 +10,7 @@ This is a little app that will just generate or find some recipes for you and sh
 first go in to the folder called recipebot after cloning the repo and install dependencies and run the server:
 
 ```
-git clone 
+git clone https://github.com/Krish54491/cf_ai_recipebot.git
 cd recipebot
 npm install -g wrangler
 npm install
