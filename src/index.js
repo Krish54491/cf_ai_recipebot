@@ -62,7 +62,7 @@ export default {
             "time_minutes": 45,
             "difficulty": "easy",
             "ingredients": [
-              { "name": "string", "qty": "string", "normalized": "string" }
+              { "name": "string", "qty": "string", "normalized": "string", "shopping": "string" }
             ],
             "steps": ["string"]
           }

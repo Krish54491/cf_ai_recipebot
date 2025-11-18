@@ -6,7 +6,7 @@ export default function RecipeApp() {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+  const [ingredients, setIngredients] = useState("");
   async function generate() {
     if (!food.trim()) {
       setError("Enter a food first.");
@@ -33,10 +33,30 @@ export default function RecipeApp() {
       }
     } catch (err) {
       setError("Failed to reach backend: " + err.message);
+      setLoading(false);
+      return;
     }
-
+    setIngredients(data.ingredients || "");
     setLoading(false);
   }
+  
+  async function buyIngredients(recipe) { // uncompleted code to buy indgredients directly
+    if (!ingredients.trim()) {
+      setError("No ingredients to buy.");
+      return;
+    }
+    const res = await fetch("/buy", {
+      method: "POST",
+      body: JSON.stringify({items: recipe.ingredients.map(i => i.shopping)}),
+    });
+    const data = await res.json();
+    if (data.error) {
+      setError(data.error);
+      return;
+    }
+    return data.url; // URL to shopping cart
+  }
+
 
   return (
     <div style={styles.container}>
